@@ -1,0 +1,83 @@
+#Molde: EEE OP END OP END (Endereço que a instrução está na memória, operação1, operando1, operação2, operando2)
+# LOAD M(X) = 01 = carrega Mem[X] para AC
+# LOAD MQ, M(X) = 09 = carrega Mem[X] para MQ
+# LOAD MQ = 0A = carrega MQ para AC
+# STOR M(X) = 21 = armazena AC em M[X]
+
+# ADD M(X) = 05 = adiciona M[X] em AC
+# SUB M(X) = 06 = subtrai M[X] de AC
+# MUL M(X) = 0B = multiplica MQ com Mem[X], e armazena os bits menos significativos em MQ, e mais em AC (considerar apenas MQ para resultados de 40 bits)
+# DIV M(X) = 0C = divide AC por Mem[X], armazena o resultado em MQ, e o resto em AC
+# RSH = 15 = deslocamento para direita de AC = dividir AC por 2
+
+# JUMP M(X, ESQ) = 0D =  pula para a istrução a esquerda de M(X)
+# JUMP + M(X, ESQ) = 0F = pula para a instrução a esquerda de M(X) se  AC >=0
+
+### Memória com dados ##########################################################################################################
+#0x110 = x (entrada) = 3500
+#0x111 = g = 10 (entrada)
+110 00 000 00 DAC 
+111 00 000 00 00A 
+# 0x112, y = g*x
+# 0x113, k_n
+# 0x114, i
+114 00 000 00 000
+
+#Constantes - 0x300 até 0x3FF
+300 00 000 00 001 #1
+301 00 000 00 00A #10
+
+### Memória com instruções  ######################################################################################################
+
+
+#Computa y
+# LOAD MQ, M(111) = 09 111
+# MUL M(110) = 0B 110
+# LOAD MQ = 0A 000
+# STOR M(112) = 21 112
+
+000 09 111 0B 110
+001 0A 000 21 112
+
+#Computa k_0 = y/2, y já está em AC
+# RSH = 15 000 = dividir AC por 2
+# STOR M(113) = 21 113
+
+002 15 000 21 113
+
+#Início do laço - 003 -------------------
+
+#Computa k_(n+1), k_n não está em AC
+# LOAD M(112) = 01 112
+# DIV M(113) = 0C 113
+# LOAD MQ = 0A 000
+# ADD M(113) = 05 113
+# DIV 2 = RSH = 15 000
+# STOR M(113) = 21 113
+
+003 01 112 0C 113
+004 0A 000 05 113
+005 15 000 21 113
+
+#Verifica se o laço terminou
+# LOAD M(114) = 01 114
+# ADD M(300) = 05 300
+# STOR M(114) = 21 114
+# SUB M(301) = 06 301
+# JUMP+M(009, ESQ) = 0F 009
+# JUMP M(003) = 0D 003
+
+006 01 114 05 300
+007 21 114 06 301
+008 0F 009 0D 003
+
+# Fim do laço -----------------------------
+
+#Carrega o resultado e finaliza
+# LOAD M(113) = 01 113
+# JUMP M(400) = 0D 400
+
+009 01 113 0D 400
+
+
+
