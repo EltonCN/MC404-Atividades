@@ -1,0 +1,76 @@
+##EltonCN - 233840 - IC Unicamp
+#MC404 - 2S2020 - Lab 3
+
+##Instruções ------------------------------------------------------------------------------------------------------------------------
+
+#Início:
+
+# Prepara os endereços dos vetores:
+# LOAD M(3FF) = 01 3FF
+# ADD M(0FF) = 05 0FF # AC = &Vetor1[i]
+# STOR M(Carrega Vetor1[i] = 003, ESQ) = 12 003
+
+# LOAD M(3FE) = 01 3FE
+# ADD M(0FF) = 05 0FF # AC = &Vetor2[i]
+# STOR M(Multiplica com Vetor2[i] = 003, DIR) = 13 003
+
+# Carrega Vetor1[i]:
+# LOAD MQ, M(000) = 09 000: Carrega o elemento i do vetor 1
+
+# Multiplica com Vetor2[i]:
+# MUL M(000) = 0B 000
+# LOAD MQ = 0A 000
+
+# Soma ao resultado atual:
+# ADD M(0FE) = 05 0FE
+# STOR M(0FE) = 21 0FE
+
+# Incrementa i:
+# LOAD M(0FF) = 01 0FF
+# ADD M(0FB) = 05 0FB
+# STOR M(0FF) = 21 0FF
+
+#Verifica se o programa terminou: 
+# LOAD M(3FD) = 01 3FD
+# SUB M(0FF) = 06 0FF: AC = tamanho - i
+# JUMP+ M(Início = 000, ESQ) = 0F 000
+# LOAD M(0FE) = 01 0FE: Coloca resultado em AC
+# JUMP (400) = 0D 400
+
+000 01 3FF 05 0FF
+001 12 003 01 3FE
+002 05 0FF 13 003
+003 09 000 0B 000
+004 0A 000 05 0FE
+005 21 0FE 01 0FF
+006 05 0FB 21 0FF
+007 01 3FD 06 0FF
+008 0F 000 01 0FE
+009 0D 400 00 000
+
+
+##Dados -------------------------------------------------------------------------------------------------------------------------
+
+0FB 00 000 00 001 # Constante 1
+0FC 00 000 00 000 # Vetor1[i]
+0FD 00 000 00 000 # Vetor2[i]
+0FE 00 000 00 000 # Resultado = 0
+0FF 00 000 00 000 # i = 0
+
+##Não usar de 0x100 para frente ---------------------------------------------------------------------------------------------------
+
+#0x3FF = Endereço do 1º vetor
+#0x3FE = Endereço do 2º vetor
+#0x3FD = Tamanho dos Vetores
+
+3FD 00 000 00 011
+3FF 00 000 00 211
+3FE 00 000 00 222
+
+211 00 000 00 000
+212 00 000 00 010
+213 00 000 00 101
+
+222 00 000 00 001
+223 00 000 00 110
+224 00 000 01 001

@@ -1,0 +1,17 @@
+#Molde: EEE OP END OP END (Endereço que a instrução está na memória, operação1, operando1, operação2, operando2)
+# LOAD M(X) = 01 = carrega Mem[X] para AC
+# LOAD MQ, M(X) = 09 = carrega Mem[X] para MQ
+# LOAD MQ = 0A = carrega MQ para AC
+# STOR M(X) = 21 = armazena AC em M[X]
+
+# ADD M(X) = 05 = adiciona M[X] em AC
+# SUB M(X) = 06 = subtrai M[X] de AC
+# MUL M(X) = 0B = multiplica MQ com Mem[X], e armazena os bits menos significativos em MQ, e mais em AC (considerar apenas MQ para resultados de 40 bits)
+# DIV M(X) = 0C = divide AC por Mem[X], armazena o resultado em MQ, e o resto em AC
+# RSH = 15 = deslocamento para direita de AC = dividir AC por 2
+
+# JUMP M(X, ESQ) = 0D =  pula para a istrução a esquerda de M(X)
+# JUMP + M(X, ESQ) = 0F = pula para a instrução a esquerda de M(X) se  AC >=0
+
+# STOR M(X, ESQ) = 12 # Endereço da instrução a esquerda = AC
+# STOR M(X, DIR) = 13 # Endereço da instrução a direita = AC
