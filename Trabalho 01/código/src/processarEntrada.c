@@ -3,36 +3,34 @@
 #include <stdlib.h>
 #include <string.h>
  
-/* TESTAR: 
-make
-./bin/montador-p1.x testes/arq00.in
-
-*/
+// Nomes das diretivas
 const char * const NOME_DIRETIVA[] = {".SET\0", ".ORG\0", ".ALIGN\0", ".WFILL\0", ".WORD\0", 
                                     ".set\0", ".org\0", ".align\0", ".wfill\0", ".word\0"};
-const int N_NOME_DIRETIVA = 10;
-const int MENOR_DIRETIVA = 5;//Menor diretiva é .set = [.,s,e,t,\0]
+const int N_NOME_DIRETIVA = 10; //Quantidade de nom das diretivas
+const int MENOR_DIRETIVA = 5;//Número de caractéres na menor diretiva. Menor diretiva é .set = [.,s,e,t,\0]
 
+//Mnemonicos das instruções
 const char * const MNEMONICO_INSTRUCAO[] = {"LD\0","LDINV\0","LDABS\0","LDMQ\0","LDMQMX\0","STORE\0","JUMP\0","JGE\0","ADD\0",
                                             "ADDABS\0","SUB\0","SUBABS\0","MULT\0","DIV\0","LSH\0","RSH\0","STOREND\0", 
                                             "ld\0","ldinv\0","ldabs\0","ldmq\0","ldmqmx\0","store\0","jump\0","jge\0","add\0",
                                             "addabs\0","sub\0","subabs\0","mult\0","div\0","lsh\0","rsh\0","storend\0"};
-const int N_MNEMONICO_INSTRUCAO = 34;
-const int MENOR_INSTRUCAO = 3;//Menor instrução é ld = [l,d,\0]
-const int INSTRUCAO_0_ARGUMENTO[] = {14, 15, 31, 32, 3, 20};
-const int N_INSTRUCAO_0_ARGUMENTO = 6;
+const int N_MNEMONICO_INSTRUCAO = 34; //Quantidade de mnemonicos das instruções
+const int MENOR_INSTRUCAO = 3;//Número de caractéres na menor instrução. Menor instrução é ld = [l,d,\0]
+const int INSTRUCAO_0_ARGUMENTO[] = {14, 15, 31, 32, 3, 20}; //Índices das instruções que recebem 0 argumentos
+const int N_INSTRUCAO_0_ARGUMENTO = 6; //Quantidades de instruções que recebem 0 argumentos
 
 
+//Define o tipo de argumento que um comando recebe
 typedef struct TipoArgumento
 {
-    TipoDoToken tipoToken[4];
-    int decMin[2];
-    int decMax[2];
+    TipoDoToken tipoToken[4]; //Tipos possíveis de tokens
+    int decMin[4]; //Se decimal, mínimo possível
+    int decMax[4]; //Se decimal, máximo possível
 } TipoArgumento;
 
 //Define a lista de argumentos que cada diretiva pode receber. Cada linha é uma diretiva (mesmo índice do vetor de diretivas), 
 //cada coluna contém dois elementos = argumentos. Argumento com tipoToken = {0} é inválido, o que significa que não recebe argumento
-//{  {Argumento1}, {Argumento2}, {Argumento3}, {Argumento4} }
+//{  {Argumento1}, {Argumento2} }
 //Argumento: {{Tipo1,Tipo2, -1=FIM}, {min1, min2}, {max1, max2}}
 const TipoArgumento ARGUMENTO_DIRETIVA[][2] = {
     {   {{Nome, -1},{0},{0}},   {{Decimal,Hexadecimal, -1 },{0},{2147483647}} }, //.set
@@ -42,6 +40,9 @@ const TipoArgumento ARGUMENTO_DIRETIVA[][2] = {
     {   {{Decimal, Hexadecimal, Nome, -1},{-2147483648},{2147483647}},   {{0,-1},{0},{0}} } //.word
     };
 
+//Verifica se um char é um número
+//@param c - O caracter
+//@return 1 se true, 0 se falso
 int charNumerico(char c)
 {
     //É número
@@ -54,6 +55,8 @@ int charNumerico(char c)
 }
 
 //Verifica se um char é alfanumérico (underscore incluído)
+//@param c - caracter
+//@return 1 se true, 0 se falso
 int charAlfanumerica(char c)
 {
     //É letra
@@ -80,7 +83,7 @@ int charAlfanumerica(char c)
 //@param palavra - A palavra que será verificada
 //@param inicio - O índice de onde deverá ser verificado
 //@param fim - O último índice que deverá ser verificado
-//@return 1 se for, 0 se não for alfanumérica
+//@return 1 se true, 0 se não true 
 int stringAlfanumerica(char* palavra, int inicio, int fim)
 {
     for(int i = inicio; i<= fim; i++)
@@ -94,6 +97,9 @@ int stringAlfanumerica(char* palavra, int inicio, int fim)
     return 1;
 }
 
+//Verifica se uma string é numérica
+//@param palavra - A string
+//@return 1 se true, 0 se false
 int stringNumerica(char *palavra)
 {
     int i = 0;
@@ -111,6 +117,10 @@ int stringNumerica(char *palavra)
     return 1;
 }
 
+//Verifica se uma palavra é um hexadecimal
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return 1 se true, 0 se false
 int eHexadecimal(char* palavra, int tamanho)
 {    
     //Começa com "0x"
@@ -145,6 +155,10 @@ int eHexadecimal(char* palavra, int tamanho)
     return 1;
 }
 
+//Verifica se uma palavra é uma definição de rótulo
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return 1 se true, 0 se false
 int eRotulo(char* palavra, int tamanho)
 {   
     //Rótulo não pode conter apenas : e NULL
@@ -168,6 +182,10 @@ int eRotulo(char* palavra, int tamanho)
     return stringAlfanumerica(palavra, 0, tamanho-3);
 }
 
+//Verifica se uma palavra é uma diretiva
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return 1 se true, 0 se false
 int eDiretiva(char* palavra, int tamanho)
 {
     
@@ -192,6 +210,10 @@ int eDiretiva(char* palavra, int tamanho)
     return 0;
 }
 
+//Verifica se uma palavra é uma instrução
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return 1 se true, 0 se false
 int eInstrucao(char* palavra, int tamanho)
 {
     if(tamanho <MENOR_INSTRUCAO)
@@ -211,11 +233,19 @@ int eInstrucao(char* palavra, int tamanho)
     return 0;
 }
 
+//Verifica se uma palavra é um decimal
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return 1 se true, 0 se false
 int eDecimal(char* palavra, int tamanho)
 {
     return stringNumerica(palavra);
 }
 
+//Verifica se uma palavra é um nome
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return 1 se true, 0 se false
 int eNome(char* palavra, int tamanho)
 {
     if(charNumerico(palavra[0]) == 1)
@@ -226,6 +256,10 @@ int eNome(char* palavra, int tamanho)
     return stringAlfanumerica(palavra, 0, tamanho -2);
 }
 
+//Verifica o tipo de token que uma palavra pertence
+//@param palavra - A palavra
+//@param tamanho - O tamanho da palavra
+//@return o tipo da palavra 
 TipoDoToken verificaTipo(char* palavra, int tamanho)
 {
 
@@ -266,15 +300,19 @@ TipoDoToken verificaTipo(char* palavra, int tamanho)
     return 0;
 }
 
-void printErro(int linha)
+//Imprime um erro gramatical
+//@param linha - A linha do erro
+void printErroGramatical(int linha)
 {
     fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d\n", linha);
 }
 
+//Procura erros gramaticais na lista de tokens
+//@return 1 se houver erro, 0 se contrário
 int procuraErroGramatical()
 {
     
-    Token* tokens[4];
+    Token* tokens[4]; //Armazena uma linha de tokens
 
     //Comando = diretiva ou instrução
     int linha, index, nRotulo, nComand, posComand, posRotulo;
@@ -291,11 +329,12 @@ int procuraErroGramatical()
 
         linha = recuperaToken(i)->linha;
 
+        //Separa uma linha de tokens
         while(recuperaToken(i)->linha == linha)
         {
             if(index == 4)
             {
-                printErro(linha);
+                printErroGramatical(linha);
                 return 1;
             }
 
@@ -326,22 +365,23 @@ int procuraErroGramatical()
             tokens[j] = NULL;
         }
 
+        //Procura erros
 
         if(nRotulo > 1)
         {
-            printErro(linha); // Mais de um rótulo
+            printErroGramatical(linha); // Mais de um rótulo
             return 1;
         }
         else if(posRotulo != 0)
         {
-            printErro(linha); // Rótulo fora do começo da linha
+            printErroGramatical(linha); // Rótulo fora do começo da linha
             return 1;
         }
         else if(nComand != 0)
         {
             if(nComand > 1)
             {
-                printErro(linha); // Mais de um comando (diretiva/instrução)
+                printErroGramatical(linha); // Mais de um comando (diretiva/instrução)
                 return 1;
             }
 
@@ -349,13 +389,13 @@ int procuraErroGramatical()
             {
                 if(tokens[3] != NULL)
                 {
-                    printErro(linha); //Nenhum comando recebe mais que dois argumentos (quarta possição não nula)
+                    printErroGramatical(linha); //Nenhum comando recebe mais que dois argumentos (quarta possição não nula)
                     return 1;
                 }
             }
             else if(posComand> 1)
             {
-                printErro(linha); //É impossível um comando fora na 3ª ou 4ª posição
+                printErroGramatical(linha); //É impossível um comando na 3ª ou 4ª posição
                 return 1;
             }
 
@@ -368,7 +408,7 @@ int procuraErroGramatical()
                     {
                         if(index-nComand-nRotulo != 0)
                         {
-                            printErro(linha); //Instrução sem argumento recendo argumento
+                            printErroGramatical(linha); //Instrução sem argumento recendo argumento
                             return 1;
                         }
                         zeroArgumento = 1;
@@ -380,7 +420,7 @@ int procuraErroGramatical()
                 {
                     if(tokens[posComand+1] == NULL)
                     {
-                        printErro(linha);
+                        printErroGramatical(linha);
                         return 1;    
                     }
                     else if(tokens[posComand+1]->tipo == Decimal)
@@ -389,13 +429,13 @@ int procuraErroGramatical()
 
                         if(num < 0 || num > 1023)
                         {
-                            printErro(linha); //Instrução com decimal fora do range
+                            printErroGramatical(linha); //Instrução com decimal fora do range
                             return 1;
                         }
                     }
                     else if(tokens[posComand+1]->tipo != Hexadecimal && tokens[posComand+1]->tipo != Nome)
                     {
-                        printErro(linha); //Tipo incorreto para argumento da instrução
+                        printErroGramatical(linha); //Tipo incorreto para argumento da instrução
                         return 1;
                     }
                 }
@@ -458,7 +498,7 @@ int procuraErroGramatical()
                     
                     if(correto == 0)
                     {
-                        printErro(linha); //Tipo incorreto de argumento para a diretiva
+                        printErroGramatical(linha); //Tipo incorreto de argumento para a diretiva
                         return 1;
                     }
 
@@ -562,6 +602,7 @@ int processarEntrada(char* entrada, unsigned tamanho)
         }
     }while(i < tamanho);
 
+    //Procura erros gramaticais e finaliza
     if(getNumberOfTokens() > 0)
     {
         return procuraErroGramatical();
