@@ -1,0 +1,9 @@
+Na pasta código:
+
+Arquivo indivídual
+make
+./bin/montador-p1.x testes/arq00.in
+
+Tudo
+./montador.sh -c -t -l -e parte1
+(esquerda é resultado, direita é esperado)
