@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
  
+/*
+    Realiza o processamento da entrada do montador
+    Separa a entrada em tokens, procura erros léxicos e procura erros gramaticais
+*/
+
 // Nomes das diretivas
 const char * const NOME_DIRETIVA[] = {".SET\0", ".ORG\0", ".ALIGN\0", ".WFILL\0", ".WORD\0", 
                                     ".set\0", ".org\0", ".align\0", ".wfill\0", ".word\0"};
