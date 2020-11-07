@@ -1,2 +1,0 @@
-varx: .word 10 # (Decimal)
-VARY: .word 0x100Y  #Erro Lexico. Hexadecimal Invalido

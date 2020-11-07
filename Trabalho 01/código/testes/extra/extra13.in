@@ -1,3 +1,0 @@
-
-hello:
-    .wfill 100000000 0x10    #Erro gramatical: valores fora do invervalo do .wfill (0-1023)

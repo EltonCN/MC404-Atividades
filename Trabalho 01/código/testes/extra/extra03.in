@@ -1,4 +1,0 @@
-vark: .word 20
-vary: .word 30
-
-rotulo::         #Erro lexico: Label invalido, com '::'

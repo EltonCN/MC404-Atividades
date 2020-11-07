@@ -1,0 +1,62 @@
+
+.set h 0x000000000A
+.set N 0x000000000A
+
+
+.org 0x000
+
+LDMQMX g
+MULT x
+LDMQ
+STORE y
+
+
+RSH
+STORE k
+
+laco:
+
+LD y
+DIV k
+LDMQ
+ADD k
+RSH
+STORE k
+
+
+LD i
+ADD n_1
+STORE i
+LD n
+SUB i
+JGE laco
+
+LD k
+JUMP 0x400
+
+
+
+
+
+# Dados ------------------------------
+#Entrada
+.org 0x110
+    x:
+        .word 0x0000000DAC
+
+#Variáveis
+.org 0x200
+    i: 
+        .word 0x0000000000
+    y:
+.org 0x202
+    k:
+.org 0x203
+#Constantes
+    g:
+        .word h
+    n:
+        .word N
+    n_1:
+        .word 0x0000000001
+        

@@ -9,7 +9,9 @@
 int pontoMontagem = 0;
 int lado = ESQ;
 char saida[1023][14];
-int indiceSaida = 0;
+
+int mapeiaLinha[1023];
+int indexMapa = 0;
 
 char* converteParaHex(char* palavra)
 {
@@ -63,22 +65,22 @@ char* formataPalavraHex(char* palavra)
     hex[1] = '0';
     hex[2] = '0';
 
-    int nDigito = strlen(palavra);
+    int nDigito = strlen(palavra)-2;
 
     if(nDigito == 1)
     {
-        hex[2] = palavra[0];
+        hex[2] = palavra[2];
     }
     else if (nDigito == 2)
     {
-        hex[1] = palavra[0];
-        hex[2] = palavra[1];
+        hex[1] = palavra[2];
+        hex[2] = palavra[3];
     }
     else
     {
-        hex[0] = palavra[0];
-        hex[1] = palavra[1];
-        hex[2] = palavra[2];
+        hex[0] = palavra[2];
+        hex[1] = palavra[3];
+        hex[2] = palavra[4];
     }  
 
     return hex;
@@ -93,6 +95,9 @@ void preencheAAA(int linha)
         saida[linha][1] = pontoHex[1];
         saida[linha][2] = pontoHex[2];
     }
+
+    mapeiaLinha[indexMapa] = linha;
+    indexMapa+=1;
 }
 
 
@@ -113,7 +118,6 @@ int geraInstrucao(Token* inst, Token* arg1)
 
         char* hex = formataPalavraHex(arg1->palavra);
 
-
         instrucao[2] = hex[0];
         instrucao[3] = hex[1];
         instrucao[4] = hex[2];
@@ -122,6 +126,8 @@ int geraInstrucao(Token* inst, Token* arg1)
     else if(arg1->tipo == Decimal)
     {
         char* hex;
+
+        
 
         hex = converteParaHex(arg1->palavra);
        
@@ -163,7 +169,7 @@ int geraInstrucao(Token* inst, Token* arg1)
         i+=1;
     } 
     
-    
+
     instrucao[0] = '0';
 
     if(strcmp(inst->palavra, "LD\0") == 0)
@@ -241,12 +247,12 @@ int geraInstrucao(Token* inst, Token* arg1)
     }
     else if(strcmp(inst->palavra, "LSH\0") == 0)
     {
-        instrucao[1] = '1';
+        instrucao[0] = '1';
         instrucao[1] = '4';
     }
     else if(strcmp(inst->palavra, "RSH\0") == 0)
     {
-        instrucao[1] = '1';
+        instrucao[0] = '1';
         instrucao[1] = '5';
     }
     else//"STREND\0"
@@ -278,12 +284,9 @@ int geraInstrucao(Token* inst, Token* arg1)
 
     if(saida[pontoMontagem][0] == '\0')
     {
-        char* pontoHex = converteIntParaHex(pontoMontagem);
-
-        saida[pontoMontagem][0] = pontoHex[0];
-        saida[pontoMontagem][1] = pontoHex[1];
-        saida[pontoMontagem][2] = pontoHex[2];
+        preencheAAA(pontoMontagem);
     }
+
 
     if(lado == ESQ)
     {
@@ -432,12 +435,16 @@ int executaDiretiva(Token* dir, Token* arg1, Token* arg2)
 
         for(int i = 0; i<n; i++)
         {
-            preencheAAA(pontoMontagem+i);
-
-            for(int j = 0; j<10; j++)
+            if(saida[pontoMontagem+i][0] == '\0')
             {
-                saida[pontoMontagem+i][j+3] = valor[j];
+                preencheAAA(pontoMontagem+i);
+
+                for(int j = 0; j<10; j++)
+                {
+                    saida[pontoMontagem+i][j+3] = valor[j];
+                }
             }
+            
         }
 
         pontoMontagem += n;
@@ -507,14 +514,23 @@ int executaDiretiva(Token* dir, Token* arg1, Token* arg2)
 
         }
 
-        preencheAAA(pontoMontagem);
-
-        for(int j = 0; j<10; j++)
+        if(saida[pontoMontagem][0] == '\0')
         {
-            saida[pontoMontagem][j+3] = valor[j];
-        }
+            preencheAAA(pontoMontagem);
 
-        pontoMontagem += 1;
+            for(int j = 0; j<10; j++)
+            {
+                saida[pontoMontagem][j+3] = valor[j];
+            }
+
+            pontoMontagem += 1;
+        }
+        else
+        {
+            pontoMontagem += 1;
+        }
+        
+        
     }
 
 
@@ -543,6 +559,8 @@ int emitirMapaDeMemoria()
             saida[i][j] = '0';
         }
         saida[i][13] = '\0';
+
+        mapeiaLinha[i] = -1;
     }
 
 
@@ -552,6 +570,71 @@ int emitirMapaDeMemoria()
     int linha;
     Token* tokens[4]; //Armazena uma linha de tokens
 
+    ///Rodada 1: procura rotulos
+    while (getNumberOfTokens() != i)
+    {
+        linha = recuperaToken(i)->linha;
+        posComand = -1;
+        index = 0;
+
+        //Separa uma linha de tokens
+        while(recuperaToken(i)->linha == linha)
+        {
+            tokens[index] = recuperaToken(i);
+
+            if(tokens[index]->tipo == Instrucao || tokens[index]->tipo == Diretiva)
+            {
+                posComand = index;
+            }
+
+            i+= 1;
+            index += 1;
+
+            if(i == getNumberOfTokens())
+            {
+                break;
+            }
+        }
+
+        if(tokens[0]->tipo == DefRotulo)
+        {
+            adicionaSimbolo(tokens[0]->palavra, pontoMontagem, lado, DefRotulo);
+        }
+
+        if(posComand != -1)
+        {
+            if(tokens[posComand]->tipo == Instrucao)
+            {
+                if(lado == ESQ)
+                {
+                    lado = DIR;
+                }
+                else
+                {
+                    lado = ESQ;
+                    pontoMontagem += 1;
+                }
+                
+            }
+            else
+            {
+                int lugarErrado = executaDiretiva(tokens[posComand], tokens[posComand+1], tokens[posComand+2]);
+                if( lugarErrado!= 0)
+                {
+                    printErroSimbolo(tokens[posComand+lugarErrado]->palavra);
+                    return 1;
+                }
+            }
+           
+        }
+
+    }
+
+    pontoMontagem = 0;
+    lado = ESQ;
+
+    //Rodada 2: monta o mapa
+    i = 0;
     while (getNumberOfTokens() != i)
     {
         linha = recuperaToken(i)->linha;
@@ -582,11 +665,6 @@ int emitirMapaDeMemoria()
             tokens[j] = NULL;
         }
 
-        if(tokens[0]->tipo == DefRotulo)
-        {
-            adicionaSimbolo(tokens[0]->palavra, pontoMontagem, lado, DefRotulo);
-        }
-
         if(posComand != -1)
         {
             if(tokens[posComand]->tipo == Instrucao)
@@ -610,41 +688,40 @@ int emitirMapaDeMemoria()
         }
 
     }
-    
+
     for(int i = 0; i<1023; i++)
     {
-        if(saida[i][0] != '\0')
+        if(mapeiaLinha[i] == -1)
         {
-            for(int j = 0; j<3; j++)
-            {
-                printf("%c", saida[i][j]);
-            }
-            printf(" ");
-            for(int j = 3; j<5; j++)
-            {
-                printf("%c", saida[i][j]);
-            }
-            printf(" ");
-            for(int j = 5; j<8; j++)
-            {
-                printf("%c", saida[i][j]);
-            }
-            printf(" ");
-            for(int j = 8; j<10; j++)
-            {
-                printf("%c", saida[i][j]);
-            }
-            printf(" ");
-            for(int j = 10; j<13; j++)
-            {
-                printf("%c", saida[i][j]);
-            }
-            printf("\n");
+            break;
         }
+        for(int j = 0; j<3; j++)
+        {
+            printf("%c", saida[mapeiaLinha[i]][j]);
+        }
+        printf(" ");
+        for(int j = 3; j<5; j++)
+        {
+            printf("%c", saida[mapeiaLinha[i]][j]);
+        }
+        printf(" ");
+        for(int j = 5; j<8; j++)
+        {
+            printf("%c", saida[mapeiaLinha[i]][j]);
+        }
+        printf(" ");
+        for(int j = 8; j<10; j++)
+        {
+            printf("%c", saida[mapeiaLinha[i]][j]);
+        }
+        printf(" ");
+        for(int j = 10; j<13; j++)
+        {
+            printf("%c", saida[mapeiaLinha[i]][j]);
+        }
+        printf("\n");
     }
 
-
-    //imprimeTabela();
     /* printf("Voce deve implementar essa função para a Parte 2!");*/
     return 0;
 }
