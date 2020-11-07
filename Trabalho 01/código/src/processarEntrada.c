@@ -309,7 +309,7 @@ TipoDoToken verificaTipo(char* palavra, int tamanho)
 //@param linha - A linha do erro
 void printErroGramatical(int linha)
 {
-    fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d\n", linha);
+    fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", linha);
 }
 
 //Procura erros gramaticais na lista de tokens
