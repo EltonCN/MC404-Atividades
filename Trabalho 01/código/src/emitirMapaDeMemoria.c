@@ -10,9 +10,21 @@ int pontoMontagem = 0;
 int lado = ESQ;
 char saida[1023][14];
 
+/**
+ * @brief Mapeia a para a linha da saída que deverá ser printada
+ * 
+ * Como a saída desejada é na ordem do código de montagem, não em ordem crescente do mapa de memória,
+ * se tornou necessário mapear as saídas
+ */
 int mapeiaLinha[1023];
-int indexMapa = 0;
+int indexMapa = 0; // Índice da última posição do mapa preenchida
 
+/**
+ * @brief Converte uma string de um token Decimal para um endereço AAA
+ * 
+ * @param palavra A string com os dígitos decimais
+ * @return char* A string formatada
+ */
 char* converteParaHex(char* palavra)
 {
     int valor = atoi(palavra);
@@ -35,6 +47,12 @@ char* converteParaHex(char* palavra)
     return hex;
 }
 
+/**
+ * @brief Converte um valor inteiro para um Hexadecimal no formato AAA
+ * 
+ * @param valor Valor inteiro
+ * @return char* String formatada
+ */
 char* converteIntParaHex(int valor)
 {
     char* hex = malloc(sizeof(char)*3);
@@ -57,6 +75,12 @@ char* converteIntParaHex(int valor)
     return hex;
 }
 
+/**
+ * @brief Converte uma palavra de token Hexadecimal para o formato AAA
+ * 
+ * @param palavra String do token Hexadecimal
+ * @return char* String formatada
+ */
 char* formataPalavraHex(char* palavra)
 {
     char* hex = malloc(sizeof(char)*3);
@@ -86,6 +110,13 @@ char* formataPalavraHex(char* palavra)
     return hex;
 }
 
+/**
+ * @brief Preenche o endereço de uma linha no mapa de saída
+ * 
+ * Também coloca na próxima posição do mapa de linhas essa linha
+ * 
+ * @param linha Linha que deverá ser preenchida
+ */
 void preencheAAA(int linha)
 {
     if(saida[linha][0] == '\0')
@@ -100,7 +131,13 @@ void preencheAAA(int linha)
     indexMapa+=1;
 }
 
-
+/**
+ * @brief Gera o código da instrução no mapa de memória
+ * 
+ * @param inst Token da instrução
+ * @param arg1 Token do argumento da instruçãp
+ * @return int 1 se houve erro, 0 se contrário
+ */
 int geraInstrucao(Token* inst, Token* arg1)
 {
     char instrucao[5];
@@ -301,7 +338,16 @@ int geraInstrucao(Token* inst, Token* arg1)
     return 0;
 }
 
-int executaDiretiva(Token* dir, Token* arg1, Token* arg2)
+/**
+ * @brief Executa uma diretiva
+ * 
+ * @param dir Token da diretiva
+ * @param arg1 Token do primeiro argumento da diretiva
+ * @param arg2 Token do segundo argumento da diretiva
+ * @param preenche 1 se o mapa de memória deve ser preenchido, 0 se contrário
+ * @return int 1 se erro, 0 se contrário
+ */
+int executaDiretiva(Token* dir, Token* arg1, Token* arg2, int preenche)
 {
     int i = 0;
 
@@ -435,7 +481,7 @@ int executaDiretiva(Token* dir, Token* arg1, Token* arg2)
 
         for(int i = 0; i<n; i++)
         {
-            if(saida[pontoMontagem+i][0] == '\0')
+            if(preenche == 1)
             {
                 preencheAAA(pontoMontagem+i);
 
@@ -514,7 +560,7 @@ int executaDiretiva(Token* dir, Token* arg1, Token* arg2)
 
         }
 
-        if(saida[pontoMontagem][0] == '\0')
+        if(preenche == 1)
         {
             preencheAAA(pontoMontagem);
 
@@ -537,6 +583,11 @@ int executaDiretiva(Token* dir, Token* arg1, Token* arg2)
     return 0;
 }
 
+/**
+ * @brief Imprime a mensagem de erro para símbolo não encontrado
+ * 
+ * @param simbolo Símbolo não definido que foi encontrado
+ */
 void printErroSimbolo(char* simbolo)
 {
     fprintf(stderr, "ERRO: Rótulo ou símbolo usado mas não definido: %s\n", simbolo);
@@ -618,7 +669,7 @@ int emitirMapaDeMemoria()
             }
             else
             {
-                int lugarErrado = executaDiretiva(tokens[posComand], tokens[posComand+1], tokens[posComand+2]);
+                int lugarErrado = executaDiretiva(tokens[posComand], tokens[posComand+1], tokens[posComand+2], 0);
                 if( lugarErrado!= 0)
                 {
                     printErroSimbolo(tokens[posComand+lugarErrado]->palavra);
@@ -677,7 +728,7 @@ int emitirMapaDeMemoria()
             }
             else
             {
-                int lugarErrado = executaDiretiva(tokens[posComand], tokens[posComand+1], tokens[posComand+2]);
+                int lugarErrado = executaDiretiva(tokens[posComand], tokens[posComand+1], tokens[posComand+2], 1);
                 if( lugarErrado!= 0)
                 {
                     printErroSimbolo(tokens[posComand+lugarErrado]->palavra);
