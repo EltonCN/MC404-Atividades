@@ -1,8 +1,12 @@
+#EltonCN 233840 EngComp
+#IC MC404 2s2021
+#lab07
+
 .text
   .align 1
   .globl _start
 
-_start:  
+_start: #main  
     addi sp, sp, -64
     sw ra, 0(sp)
     sw fp, 4(sp)
@@ -21,24 +25,40 @@ _start:
     #44sp = intLido
     #48sp = estado (0 = preParede, 1 = dentroParedeEsquerda, 2 = dentroPista, 3 = posPista)
 
-    la a0, 8(sp)
-    jal ler_int 
+    mv a0, sp
+    addi a0, a0, 8
+    jal ler_int #ler x0
 
-    la a0, 12(sp)
-    jal ler_int
+    mv a0, sp
+    addi a0, a0, 12
+    jal ler_int #ler y0
 
     jal ignora_linha
 
-    la a0, 24(sp)
-    jal ler_int
+    mv a0, sp
+    addi a0, a0, 24
+    jal ler_int #ler C
 
-    la a0, 28(sp)
-    jal ler_int
+    mv a0, sp
+    addi a0, a0, 28
+    jal ler_int #ler L
 
-    li a0, 0
+    jal ignora_linha
+
+    #xAtual = x0
+    lw a0, 8(sp)
+    sw a0, 16(sp)
+
+    #yAtual = y0
+    lw a0, 12(sp)
+    sw a0, 20(sp)
+
+    jal ignora_linha
+
+    li a0, 1
     sw a0, 32(sp)
 
-    1:#for i = 0; i<L; i++
+    1:#for i = 1; i<L; i++
         lw t0, 28(sp)
         bge a0, t0, 2f
 
@@ -51,7 +71,8 @@ _start:
             lw t0, 24(sp)
             bge a0, t0, 4f
 
-            la a0, 44(sp)
+            mv a0, sp
+            addi a0, a0, 44
             jal ler_int
 
             lw a0, 48(sp)
@@ -63,8 +84,10 @@ _start:
 
                 beqz a1, 6f
                 ##if 44sp > 0
-                    addi a1, a1, 1
-                    sw a1, 44(sp)
+                    addi a0, a0, 1
+                    sw a0, 48(sp)
+
+                j 7f
                 6:
             5:
             li t0, 1
@@ -73,11 +96,12 @@ _start:
 
                 bnez a1, 6f
                 ##if 44sp == 0
-                    addi a1, a1, 1
-                    sw a1, 44(sp)
+                    addi a0, a0, 1
+                    sw a0, 48(sp)
 
                     lw t0, 36(sp)
                     sw t0, 40(sp) #xMed = j
+                j 7f
                 6:
             5:
             li t0, 2
@@ -86,8 +110,8 @@ _start:
                 
                 beqz a1, 6f
                 ##if 44sp > 0
-                    addi a1, a1, 1
-                    sw a1, 44(sp)
+                    addi a0, a0, 1
+                    sw a0, 48(sp)
 
                     lw t0, 36(sp)
                     lw t1, 40(sp)
@@ -95,9 +119,11 @@ _start:
                     add t1, t1, t0 #xMed += j
                     srai t1, t1, 1 #xMed /= 2^1 (ou seja, xMed /= 2)
                     sw t1, 40(sp)
+                j 7f
                 6:
 
             5:
+            7:
 
             lw a0, 36(sp)
             addi a0, a0, 1
@@ -129,8 +155,8 @@ _start:
         addi t0, t0, 1 #yAtual += 1
         sw t0, 20(sp)
 
-        mv a0, t1 #a0 = t1 = xAtual
-        mv a1, t0 #a1 = t0 = yAtual
+        lw a0, 16(sp) #a0  = xAtual
+        lw a1, 20(sp) #a1  = yAtual
         jal print_resposta
 
         lw a0, 32(sp)
@@ -156,7 +182,7 @@ print_resposta: #<- (a0 = x, a1 = y)
     addi fp, sp, 16
 
 
-    li t0, 1
+    li t0, 0
     li t1, 4
     li t2, 1000
     li t3, 10
@@ -203,13 +229,15 @@ ignora_linha: #le até \n
     sw fp, 4(sp)
     addi fp, sp, 16
 
-    la a0, 8(sp)
+    mv a0, sp
+    addi a0, a0, 8
     jal ler_char
     lb a0, 8(sp)
 
     1: #do
 
-        la a0, 8(sp)
+        mv a0, sp
+        addi a0, a0, 8
         jal ler_char
         lb a0, 8(sp)
 
@@ -237,7 +265,8 @@ ler_int: #<-(a0 = endereço para gravar o int)
     sw a0, 8(sp)
 
     1: #do
-        la a0, 12(sp)
+        mv a0, sp
+        addi a0, a0, 12
         jal ler_char
         lb a0, 12(sp)
 
@@ -262,7 +291,8 @@ ler_int: #<-(a0 = endereço para gravar o int)
         add a1, a1, a0
         sw a1, 16(sp)
 
-        la a0, 12(sp)
+        mv a0, sp
+        addi a0, a0, 12
         jal ler_char
         lb a0, 12(sp)
 
