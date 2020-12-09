@@ -1,0 +1,2 @@
+clang-10 --target=riscv32 -march=rv32gc -mabi=ilp32d -mno-relax ra233840.s  -c -o ra233840.o
+ld.lld-10 ra233840.o -o ra233840.x
