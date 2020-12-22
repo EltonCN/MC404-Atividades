@@ -25,6 +25,9 @@ _start: #main
     #24(sp) = x
     #28(sp) = y
 
+    #56(sp) = n
+    #60(sp) = i
+
     #Inicializa os vetores
     jal get_deltat
     mv a0, sp
@@ -43,8 +46,8 @@ _start: #main
     1:
         bge a2, a3, 1f
 
-        sw a2, 32(sp)
-        sw a3, 36(sp)
+        sw a2, 60(sp)
+        sw a3, 56(sp)
 
         mv a0, sp
         addi a0, a0, 8
@@ -75,27 +78,28 @@ _start: #main
         lw a1, 28(sp)
         jal norma
         sw a0, 32(sp)
-        jal print_int
+        //jal print_int
 
         lw a0, 32(sp)
 
-        li a1, 4096
+        li a2, 6000
 
-        sub a0, a1, a0
+        li a1, 0
 
-        bgtz a0, 2f
+        bge a0, a2, 3f
+        li t0, -1
+        mul a2, a2, t0
+        blt a0, a2, 3f
             li a1, 1 
-
-            j 3f
-        2:
-            li a1, -1 
         3:
 
         sw a1, 32(sp)
         mv a0, a1
-        jal print_int
+        #jal print_int
 
-        li a0, 1000
+        lw a1, 32(sp)
+
+        li a0, 100
         li a2, 0
         li a7, 2100
         ecall
@@ -107,8 +111,8 @@ _start: #main
         jal copia_vetor
 
 
-        lw a2, 32(sp)
-        lw a3, 36(sp)
+        lw a2, 60(sp)
+        lw a3, 56(sp)
 
         addi a2, a2, 1
         j 1b
@@ -210,23 +214,14 @@ teste:
     sw zero, 24(sp)
     sw zero, 28(sp)
 
-    mv a0, sp
-    addi a0, a0, 8
-    li a1, 0
-    li a7, 169
-    ecall
-    lw a0, 8(sp) #sec
-    jal print_int
-    lw a0, 12(sp)
-    jal print_int
-    lw a0, 16(sp) #micro_sec
-    jal print_int
-    lw a0, 20(sp)
-    jal print_int
-    lw a0, 24(sp)
-    jal print_int
-    lw a0, 28(sp)
-    jal print_int
+    mv a0, zero
+    mv a1, zero
+    mv a2, zero
+    mv a4, zero
+    mv a5, zero
+    mv a6, zero
+
+
 
     lw ra, 0(sp)
     lw fp, 4(sp)
