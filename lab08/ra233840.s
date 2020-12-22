@@ -24,6 +24,13 @@ _start: #main
     #Vetor velocidade
     #24(sp) = x
     #28(sp) = y
+    #
+    #32(sp) = acel
+    #36(sp) = volante
+    #
+    #Vetor erro
+    #40(sp) = x
+    #44(sp) = y
 
     #56(sp) = n
     #60(sp) = i
@@ -41,14 +48,9 @@ _start: #main
     sw zero, 24(sp)
     sw zero, 28(sp)
 
-    li a2, 0
-    li a3, 1000000
     1:
-        bge a2, a3, 1f
 
-        sw a2, 60(sp)
-        sw a3, 56(sp)
-
+## Controle de velocidade ------------------------------------
         mv a0, sp
         addi a0, a0, 8
         jal get_pos
@@ -61,29 +63,11 @@ _start: #main
         addi a2, a2, 24
         jal sub_vetor
 
-        /*mv a0, sp
-        addi a0, a0, 24
-        mv a2, a0
-        li a1, 1000
-        jal multiplica_vetor
-
-        jal get_deltat
-        mv a1, a0
-        mv a0, sp
-        addi a0, a0, 24
-        mv a2, a0
-        jal divide_vetor*/
-
         lw a0, 24(sp)
         lw a1, 28(sp)
         jal norma
-        sw a0, 32(sp)
-        //jal print_int
-
-        lw a0, 32(sp)
 
         li a2, 6000
-
         li a1, 0
 
         bge a0, a2, 3f
@@ -92,17 +76,7 @@ _start: #main
         blt a0, a2, 3f
             li a1, 1 
         3:
-
         sw a1, 32(sp)
-        mv a0, a1
-        #jal print_int
-
-        lw a1, 32(sp)
-
-        li a0, 100
-        li a2, 0
-        li a7, 2100
-        ecall
 
         mv a0, sp
         addi a0, a0, 8
@@ -110,13 +84,74 @@ _start: #main
         addi a1, a1, 16
         jal copia_vetor
 
+##FIM Controle de velocidade FIM ----------------------------
+## Controle lateral -----------------------------------------
 
-        lw a2, 60(sp)
-        lw a3, 56(sp)
+        mv a0, sp
+        addi a0, a0, 8
+        jal verifica_lado
 
-        addi a2, a2, 1
-        j 1b
+        li t0, -1
+        mul a0, a0, t0
+        li t0, 655360
+        div a0, a0, t0
+        //srai a0, a0, 20
+        mv a2, a0
+
+
+        /*li a1, 100
+        ble a2, a1, 2f
+            #>100
+            li a2, 100
+            
+            j 3f
+        2:
+        li t0, -1
+        mul a1, a1, t0
+        bge a2, a1, 2f
+            #< -100
+            li a2, -100
+        3:*/
+        
+        sw a2, 36(sp)
+        mv a0, a2
+        jal print_int
+        lw a2, 36(sp)
+## FIM Controle lateral FIM ---------------------------------      
+
+        lw a1, 32(sp)
+        li a0, 100
+        li a7, 2100
+        ecall
+
+## Verifica se terminou -------------------------------------
+
+        mv a0, sp
+        addi a0, a0, 8
+        la a1, p_fim
+        mv a2, sp
+        addi a2, a2, 40
+        jal sub_vetor
+
+        lw a0, 40(sp)
+        lw a1, 44(sp)
+
+        li a2, 7
+
+        #while(|x|>7 and |z|>7)
+        bge a0, a2, 1b
+        bge a1, a2, 1b
+        li t0, -1
+        mul a2, a2, t0
+        blt a0, a2, 1b
+        blt a1, a2, 1b
     1:
+
+    li a1, 0
+    li a2, 0
+    li a0, 100
+    li a7, 2100
+    ecall
 
     lw ra, 0(sp)
     lw fp, 4(sp)
@@ -127,6 +162,37 @@ _start: #main
 _end:
     ecall
 
+
+verifica_lado:#<-(a0 = &posicao). -> a0, se >0, a direita do objetivo
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+
+    lw a1, 0(a0) #x
+    lw a2, 4(a0) #y
+
+    la t0, p_inicio
+    lw a3, 0(t0) #x1
+    lw a4, 4(t0) #y1
+
+    la t0, p_fim
+    lw a5, 0(t0) #x2
+    lw a6, 4(t0) #y2
+
+    sub t1, a1, a3
+    sub t2, a6, a4
+    sub t3, a2, a4
+    sub t4, a5, a3
+
+    mul t1, t1, t2
+    mul t3, t3, t4
+    sub a0, t1, t3
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
+    ret
 
 delay:
      li a2, 0
@@ -460,4 +526,14 @@ print_int: #<- (a0 = int)
 
     last_us:
         .word 0
+    .align 2
+
+    p_inicio:
+        .word 679928
+        .word 65422
+    .align 2
+
+    p_fim:
+        .word 319486
+        .word 65518
     .align 2
