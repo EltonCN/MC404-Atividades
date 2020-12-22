@@ -168,7 +168,6 @@ _start: #main
     lw ra, 0(sp)
     lw fp, 4(sp)
     addi sp, sp, 64
-    ret
 
     li a0, 0 # exit code
     li a7, 93 # syscall exit
