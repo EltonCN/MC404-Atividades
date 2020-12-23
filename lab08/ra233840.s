@@ -93,30 +93,30 @@ _start: #main
 
         li t0, -1
         mul a0, a0, t0
-        li t0, 655360
+        li t0, 393216
         div a0, a0, t0
         //srai a0, a0, 20
         mv a2, a0
 
 
-        /*li a1, 100
+        li a1, 16
         ble a2, a1, 2f
-            #>100
-            li a2, 100
+            #>10
+            li a2, 16
             
             j 3f
         2:
         li t0, -1
         mul a1, a1, t0
-        bge a2, a1, 2f
-            #< -100
-            li a2, -100
-        3:*/
+        bge a2, a1, 3f
+            #< -10
+            li a2, -16
+        3:
         
-        sw a2, 36(sp)
+        /*sw a2, 36(sp)
         mv a0, a2
         jal print_int
-        lw a2, 36(sp)
+        lw a2, 36(sp)*/
 ## FIM Controle lateral FIM ---------------------------------      
 
         lw a1, 32(sp)
@@ -136,7 +136,7 @@ _start: #main
         lw a0, 40(sp)
         lw a1, 44(sp)
 
-        li a2, 7
+        li a2, 100
 
         #while(|x|>7 and |z|>7)
         bge a0, a2, 1b
@@ -146,6 +146,12 @@ _start: #main
         blt a0, a2, 1b
         blt a1, a2, 1b
     1:
+
+    li a1, -1
+    li a2, 0
+    li a0, 200
+    li a7, 2100
+    ecall
 
     li a1, 0
     li a2, 0
