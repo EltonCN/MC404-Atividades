@@ -23,38 +23,58 @@ int_handler:
   sw t4, 48(sp)
   sw t5, 52(sp)
   sw t6, 56(sp)
-  sw ra, 60(sp)
+
+
+  #Verifica se foi syscall
+
+  csrr t0, mcause
+  bltz t0, loop_infinito #Interrupção
+  li t1, 8
+  blt t0, t1, loop_infinito #Exceção não syscall
+
 
 
   #Executa a rotina especializada
   li t0, 10
   bne a7, t0, 1f
     jal sys_set_motor
+
+    j 4f
   1:
   li t0, 11
-  bne a1, t0, 1f
+  bne a7, t0, 1f
     jal sys_set_break
+
+    j 4f
   1:
   li t0, 12
-  bne a1, t0, 1f
+  bne a7, t0, 1f
     jal sys_read_lum
+
+    j 4f
   1:
   li t0, 13
-  bne a1, t0, 1f
+  bne a7, t0, 1f
     jal sys_read_ult
+
+    j 4f
   1:
   li t0, 14
-  bne a1, t0, 1f
+  bne a7, t0, 1f
     jal sys_get_time
+
+    j 4f
   1:
   li t0, 15
-  bne a1, t0, 1f
+  bne a7, t0, 1f
     jal sys_get_position
+
+    j 4f
   1:
   li t0, 16
-  bne a1, t0, 1f
+  bne a7, t0, 1f
     jal sys_get_rotation
-  1:
+  4:
 
 
   #Recupera o contexto
@@ -76,7 +96,6 @@ int_handler:
   lw t4, 48(sp)
   lw t5, 52(sp)
   lw t6, 56(sp)
-  lw ra, 60(sp)
   addi sp, sp, 64
   csrrw sp, mscratch, sp
   
@@ -340,6 +359,7 @@ _start:
     mret
 
   loop_infinito:
+_end:
     j loop_infinito
 
 
@@ -358,6 +378,7 @@ system_stack:
 
 user_stack:
   .word 0x7fffffc
+  
 ##Coisas do carro
 # registradores set (byte): colocar 1 para iniciar a leitura, quando voltar para 0 a leitura está pronta
 
