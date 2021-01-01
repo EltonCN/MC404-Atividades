@@ -11,22 +11,98 @@
 #   tratadas na camada SoCa
 
 set_motor:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+
+    li a7, 10
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
     ret
 
 set_handbreak:
-    ret
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
 
+    li a7, 11
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
+    ret
 read_sensors:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+    
+    li a7, 12
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
     ret
 
 read_sensor_distance:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+
+    li a7, 13
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
     ret
 
 get_position:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+
+    li a7, 15
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
     ret
 
 get_rotation:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+
+    li a7, 16
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
     ret
 
 get_time:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw fp, 4(sp)
+    addi fp, sp, 16
+
+    li a7, 14
+    ecall
+
+    lw ra, 0(sp)
+    lw fp, 4(sp)
+    addi sp, sp, 16
     ret
