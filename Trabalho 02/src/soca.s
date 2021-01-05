@@ -178,7 +178,7 @@ sys_read_lum:
   addi sp, sp, -16
   sw ra, 0(sp)
   sw fp, 4(sp)
-  addi fp, sp, 167
+  addi fp, sp, 16
 
   sw a0, 8(sp)
 
@@ -272,12 +272,12 @@ sys_get_position:
   jal espera_leitura
 
   lw a0, 8(sp)
-  lw a1, 8(sp)
-  lw a2, 8(sp)
+  lw a1, 12(sp)
+  lw a2, 16(sp)
 
   lw t0, addr_gps_x
   lw t1, addr_gps_y
-  lw t1, addr_gps_z
+  lw t2, addr_gps_z
   
   lw t0, 0(t0)
   lw t1, 0(t1)
@@ -362,6 +362,23 @@ _start:
 _end:
     j loop_infinito
 
+test_code:
+  addi sp, sp, -32
+  sw ra, 0(sp)
+  sw fp, 4(sp)
+  addi fp, sp, 32
+
+  la a0, vetor
+  li a7, 12
+  ecall
+
+  fim_leitura:
+  li a7, 12
+
+  lw ra, 0(sp)
+  lw fp, 4(sp)
+  addi sp, sp, 32
+  ret
 
 ### BSS  #############################################################################
 .align 2
@@ -370,6 +387,9 @@ _end:
 system_stack_end:
   .skip 128
 system_stack:
+
+vetor:
+  .skip 500
 
 
 ### DATA #############################################################################

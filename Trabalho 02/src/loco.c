@@ -1,89 +1,145 @@
 #include "api_car.h"
 
 
-float kp = 0.001;
-float ki = 0;
-float kd = 0;
-
-float setpointVel = 100;
-
-float posicao[3];
-float direcao[3];
-float velocidade[3];
-float magVelocidade; //AINDA PRECISA CRIAR FUNÇÃO PARA CALCULAR RAIZ, POSSUI MAG^2
-float deltaT;
-float ultimaPosicao[3];
 int accel;
+int steering;
+unsigned char lum[256];
+
+//Constantes de ajuste
+const float kp = 1.2;
+const float kd = 0.5;
+const int max_steering = 80;
 
 
-void controle_longitudinal()
-{
-    float erro = setpointVel - magVelocidade;
-
-    float saida = kp*erro;
-
-    if(saida > 0)
-    {
-        accel = 1;
-    }
-    else if(saida < 0)
-    {
-        accel = -1;
-    }
-    else
-    {
-        accel = 0;
-    }
-}
-
-void calcula_velocidade()
-{
-    velocidade[0] = posicao[0] - ultimaPosicao[0];
-    velocidade[1] = posicao[1] - ultimaPosicao[1];
-    velocidade[2] = posicao[2] - ultimaPosicao[2];
-
-    velocidade[0] /= deltaT;
-    velocidade[1] /= deltaT;
-    velocidade[2] /= deltaT;
-
-    magVelocidade = 0;
-    magVelocidade += velocidade[0] * velocidade[0];
-    magVelocidade += velocidade[1] * velocidade[1];
-    magVelocidade += velocidade[2] * velocidade[2];
- }
-
-// Implemente aqui a lógica de controle do carro, utilizando as funções da api
-void user_code(void) 
+/**
+ * @brief Espera uma quantidade de tempo
+ * 
+ * @param duracao - Tempo, em milissegundos
+ */
+void delay(unsigned int duracao)
 {
     unsigned int time = get_time();
 
-    unsigned int ultimoTime = time;
-
-    while(get_time()-time< (30*1000))
+    do
     {
-        int x, y, z;
-        get_position(&x, &y, &z);
+    } while (get_time()-time < duracao);
+}
 
-        posicao[0] = ((float) x)/10.0;
-        posicao[1] = ((float) y)/10.0;
-        posicao[2] = ((float) z)/10.0;
+/**
+ * @brief Espera um tempo, enviando um comando para o motor
+ * 
+ * @param duracao - Tempo, em milissegundos
+ * @param accel  - Aceleração
+ * @param steering - Direção
+ */
+void delayMotor(unsigned int duracao, int accel, int steering)
+{
+    unsigned int time = get_time();
 
-        deltaT = get_time() - ultimoTime;
-        deltaT /= 1000.0;
+    do
+    {
+        set_motor(accel, steering);
+    } while (get_time()-time < duracao);
+}
 
-        calcula_velocidade();
 
-        controle_longitudinal();
+/*
+Funciona, mas com problema na colina:
+Ciclo de 1000 ms
+600 ms de aceleração
+kp = 1.8
+kd = 1.7
+max_steering = 80
+*/
+/*
+Funciona
+Ciclo de 1000 ms
+600 ms de aceleração
+kp = 1.2
+kd = 0.5
+max_steering = 80
+Com verificação de saída da pista
+*/
+
+/**
+ * @brief Mantém o carro dentro da pista, utilizando um controlador PD
+ * 
+ */
+void user_code(void) 
+{
+
+    int centro = 128;
+    int ultimo_erro = 0;
+
+    unsigned int time = get_time();
+
+    unsigned int ultimo_time = time;
+
+    while(1 == 1)
+    {
+        //Verifica a posição do centro da pista para calcular o erro
+        read_sensors(lum);
+
+        int n = 0;
+        int ultimo_centro = centro;
+        centro = 0;
+
+        for(int i = 0; i<256; i++)
+        {
+            if(lum[i]>125 && lum[i] < 150)
+            {
+                n += 1;
+                centro += i;
+            }
+        }
+        
+        if(n > 25)
+        {
+            centro /= n;
+        }
+        else
+        {
+            centro = ultimo_centro;
+        }
+        
+        
+
+        unsigned int time_atual = get_time();
+
+        //Controle PD para manter na pista
+        int erro = centro - 128;
+
+        int steering = kp*erro;
+        
+        steering += kd*((erro-ultimo_erro)); //(time_atual-ultimo_time));
 
 
-        set_motor(accel, 0);
+        if(steering > max_steering)
+        {
+            steering = max_steering;
+        }
+        else if(steering < -max_steering)
+        {
+            steering = -max_steering;
+        }
 
-        ultimaPosicao[0] = posicao[0];
-        ultimaPosicao[1] = posicao[1];
-        ultimaPosicao[2] = posicao[2];
-        ultimoTime = get_time();
+        //Envia o comando aos motores, com ciclos de aceleração
+        if(time_atual - time < 600)
+        {
+            set_motor(1, steering);
+        }
+        else if (time_atual - time < 1000)
+        {
+            set_motor(0, steering);
+        }
+        else
+        {
+            time = time_atual;
+            set_motor(1, steering);
+        }
+        
+        ultimo_erro = erro;
+        ultimo_time = time_atual;
     }
-
-    set_motor(0, 0);
-    set_handbreak(1);
+    
 }
