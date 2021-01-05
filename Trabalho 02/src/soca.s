@@ -121,29 +121,27 @@ sys_set_motor:
   sw fp, 4(sp)
   addi fp, sp, 16
 
-  li t0, 1
-  blt a0, t0, 1f
+  li t0, 2
+  bge a0, t0, 1f #se a0 >= 2
   li t0, -1
-  bge a0, t0, 1f
-    li a0, -1
-
-    j 4f
-  1:
-  li t0, 127
-  blt a1, t0, 1f
+  blt a0, t0, 1f #ou a0 < -1
+  li t0, 128
+  bge a1, t0, 1f #ou a1 >= 128
   li t0, -127
-  bge a1, t0, 1f
-    li a0, -1
-
-    j 4f
+  blt a1, t0, 1f #ou a1 < -127
+  j 2f #else
   1:
+    li a0, -1
+    j 3f
+  2:
     lw t0, addr_accel
     sw a0, 0(t0)
     lw t0, addr_steering
     sw a1, 0(t0)
 
     li a0, 0
-  4:
+
+  3:
 
   lw ra, 0(sp)
   lw fp, 4(sp)
@@ -359,7 +357,10 @@ _start:
     mret
 
   loop_infinito:
+    li a0, 1
+    jal sys_set_break
 _end:
+    jal sys_set_break
     j loop_infinito
 
 test_code:

@@ -9,7 +9,7 @@ unsigned char lum[256];
 const float kp = 1.2;
 const float kd = 0.5;
 const int max_steering = 80;
-
+const float setpoint_vel = 5.55556; //20 km/h
 
 /**
  * @brief Espera uma quantidade de tempo
@@ -42,6 +42,34 @@ void delayMotor(unsigned int duracao, int accel, int steering)
     } while (get_time()-time < duracao);
 }
 
+/**
+ * @brief Calcula a raiz quadrada de um número
+ * 
+ * @param num - número
+ * @return float - raiz do número
+ */
+float raiz(float num)
+{
+    if(num <= 0)
+    {
+        return 0.0;
+    }
+
+    float result = num/2.0;
+
+    for(int i = 0; i<100; i++)
+    {
+        result = 0.5*(result+(num/result));
+
+        if( (result*result)-num < 0.1)
+        {
+            break;
+        }
+    }
+
+    return result;
+
+}
 
 /*
 Funciona, mas com problema na colina:
@@ -61,13 +89,13 @@ max_steering = 80
 Com verificação de saída da pista
 */
 
+
 /**
  * @brief Mantém o carro dentro da pista, utilizando um controlador PD
  * 
  */
 void user_code(void) 
 {
-
     int centro = 128;
     int ultimo_erro = 0;
 
