@@ -155,148 +155,15 @@ void calcula_velocidade()
     magVelocidade2 += velocidade[2] * velocidade[2];
  }
 
- /**
- * @brief Calcula a raiz quadrada de um número
- * 
- * @param num - número
- * @return float - raiz do número
- */
-float raiz(float num)
-{
-    if(num <= 0)
-    {
-        return 0.0;
-    }
-
-    float result = num/2.0;
-
-    for(int i = 0; i<100; i++)
-    {
-        result = 0.5*(result+(num/result));
-
-        if( (result*result)-num < 0.1)
-        {
-            break;
-        }
-    }
-
-    return result;
-
-}
-
-/*
-int x, y, z;
-
-    int x_ant, y_ant, z_ant;
-
-    accel = 1;
-    int steering = 0;
-
-    get_position(&x_ant, &y_ant, &z_ant);
-
-    unsigned int tempo_inicio, tempo_final, tempo_accel = 100;
-
-    tempo_inicio = get_time();
-
-    
-
-    while(1 == 1)
-    {
-        tempo_final = get_time();
-
-        if(tempo_final - tempo_inicio < 1000)
-        {
-            set_motor(accel, steering);
-        }
-        else if (tempo_final - tempo_inicio < 1000)
-        {
-            set_handbreak(1);
-        }
-        else
-        {
-            get_position(&x, &y, &z);
-
-            float velocidade[3];
-            float deltaT = ((float)(tempo_final - tempo_inicio))/1000.0;
-
-            velocidade[0] = (((float) (x - x_ant))/10.0);
-            velocidade[1] = (((float) (y - y_ant))/10.0);
-            velocidade[2] = (((float) (z - z_ant))/10.0);
-
-            magVel =  (velocidade[0]*velocidade[0]);
-            magVel += (velocidade[1]*velocidade[1]);
-            magVel += (velocidade[2]*velocidade[2]);
-            magVel = raiz(magVel);
-
-            if(magVel < setpoint_vel)
-            {
-                accel = 1;
-            }
-            else
-            {
-                break;
-            }
- 
-            /*float erro = setpoint_vel - magVel;
-            
-            accel = 1;
-            if(erro < 0.0)
-            {
-                tempo_accel = 1000;
-                accel = 0;
-
-                steering = 10;
-            }
-            else
-            {
-                tempo_accel = ((int) (90.0*erro));
-
-                if(tempo_accel > 1000)
-                {
-                    tempo_accel = 1000;
-                }
-
-                steering = 0;
-            }*/
-            
-            x_ant = x;
-            y_ant = y;
-            z_ant = z;
-
-            tempo_inicio = get_time();
-        }
-    }
-
-    set_handbreak(1);
-    set_motor(0,0);
-
-    return; 
-    //// Fim da seção de testes
-*/
-
 void _start(void) 
 {
     int posicao[2];
-    int posicao_ant[2];
-
-    float magVel;
 
     while(1 == 1)
     {
         get_pos(posicao);
 
-        float velocidade[3];
-        //float deltaT = ((float)(tempo_final - tempo_inicio))/1000.0;
-
-        velocidade[0] = (((float) (posicao[0] - posicao_ant[0]))/10.0);
-        velocidade[2] = (((float) (posicao[1] - posicao_ant[1]))/10.0);   
-
-        magVel =  (velocidade[0]*velocidade[0]);
-        magVel += (velocidade[2]*velocidade[2]);
-        magVel = raiz(magVel);
-
-        int a = (int) magVel;
-
-        print_int(a);
+        print_int(posicao[0]);
+        print_int(posicao[1]);
     }
 }
