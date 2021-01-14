@@ -98,6 +98,12 @@ get_pos:#<- a0 = apontador para estrutura posicao(int x; int z;)
     li t0, 65535
     and a0, a0, t0 #a0 = z
 
+    sh a1, 12(sp)
+    lh a1, 12(sp)
+
+    sh a0, 12(sp)
+    lh a0, 12(sp)
+
     lw a2, 8(sp) #a2 = &posicao
 
     sw a1, 0(a2) #posicao.x = x

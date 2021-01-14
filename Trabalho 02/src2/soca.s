@@ -110,6 +110,7 @@ espera_leitura:
     lw t0, 0(a0)
     bnez t0, 1b
   
+  fim_espera:
   ret
 
 #a0: accel (-1, 0 ou 1)
@@ -310,12 +311,12 @@ sys_get_rotation:
   jal espera_leitura
 
   lw a0, 8(sp)
-  lw a1, 8(sp)
-  lw a2, 8(sp)
+  lw a1, 12(sp)
+  lw a2, 16(sp)
 
   lw t0, addr_gps_thetax
   lw t1, addr_gps_thetay
-  lw t1, addr_gps_thetaz
+  lw t2, addr_gps_thetaz
   
   lw t0, 0(t0)
   lw t1, 0(t1)
@@ -368,12 +369,17 @@ test_code:
   sw fp, 4(sp)
   addi fp, sp, 32
 
-  la a0, vetor
-  li a7, 12
+  inicio_leitura:
+
+  addi a0, sp, 8
+  addi a1, sp, 12
+  addi a2, sp, 16
+
+  li a7, 16
   ecall
 
   fim_leitura:
-  li a7, 12
+  j inicio_leitura
 
   lw ra, 0(sp)
   lw fp, 4(sp)
