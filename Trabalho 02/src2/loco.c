@@ -1,14 +1,26 @@
 #include "api_car.h"
 
+//Angulos das direcoes cardeais (Norte = -z)
+#define NORTE 180
+#define SUL 0
+#define LESTE 270
+#define OESTE 90
+#define NENHUM -1
 
 int accel;
 int steering;
-unsigned char lum[256];
+unsigned char lum[256]; //Sensor luz
+int x,y,z; //Posicao do carro
 
 //Constantes de ajuste
 const float kp = 1.2;
 const float kd = 0.5;
 const int max_steering = 80;
+
+//Tempos do controlador de velocidade
+unsigned int timeCtrInicio;
+unsigned int timeCtrAtual;
+
 
 
 /**
@@ -32,7 +44,7 @@ void delay(unsigned int duracao)
  * @param accel  - Aceleração
  * @param steering - Direção
  */
-void delayMotor(unsigned int duracao, int accel, int steering)
+void delayMotor(unsigned int duracao, char accel, char steering)
 {
     unsigned int time = get_time();
 
@@ -42,18 +54,21 @@ void delayMotor(unsigned int duracao, int accel, int steering)
     } while (get_time()-time < duracao);
 }
 
-unsigned int timeCtrInicio;
-unsigned int timeCtrAtual;
 
+/**
+ * @brief Envia uma direcao ao motor, controlando a velocidade por temporização
+ * 
+ * @param steering - direção para ser enviada ao motor
+ */
 void set_motor_contr(char steering)
 {
     timeCtrAtual = get_time();
 
-    if(timeCtrAtual - timeCtrInicio < 600)
+    if(timeCtrAtual - timeCtrInicio < 700)
     {
         set_motor(1, steering);
     }
-    else if (timeCtrAtual - timeCtrInicio < 990)
+    else if (timeCtrAtual - timeCtrInicio < 1000)
     {
         set_motor(0, steering);
     }
@@ -185,32 +200,6 @@ int dist_manhattan(int* vec1, int* vec2)
     
     return result;
 }
-
-int ax, ay, az;
-
-void girar(int angulo)
-{
-    
-
-    get_rotation(&ax, &ay, &az);
-
-    int steering = 127;
-
-    if(angulo < ay)
-    {
-        steering = -127;
-
-        angulo *= -1;
-    }
-
-    while(angulo - ay > 1)
-    {
-        set_motor(1,steering);
-        get_rotation(&ax, &ay, &az);
-    }
-
-}
-
 typedef struct Area
 {
     int xMin,
@@ -241,12 +230,12 @@ int dentroArea(Area area, int x, int z)
     return 0;
 }
 
-#define NORTE 180
-#define SUL 0
-#define LESTE 270
-#define OESTE 90
 
-
+/**
+ * @brief Verifica a direção cardeal do robô
+ * 
+ * @return int - Direção atual
+ */
 int getDirecao()
 {
     int ax, ay, az;
@@ -273,7 +262,42 @@ int getDirecao()
 
 }
 
-int x,y,z;
+/**
+ * @brief Verifica a direção do robô, com maior restrição dos ranges de cada direção
+ * 
+ * @return int - Direção atual
+ */
+int getDirecaoEstrito()
+{
+    int ax, ay, az;
+
+    get_rotation(&ax, &ay, &az);
+
+    if(ay>= 170 && ay <= 190)
+    {
+        return NORTE;
+    }
+    else if(ay>= 260 && ay <= 280)
+    {
+        return LESTE;
+    }
+    else if(ay>=80 && ay <= 100)
+    {
+        return OESTE;
+    }
+    else if(ay >= 350 || ay <= 10 )
+    {
+        return SUL;
+    }
+    
+    return NENHUM;
+}
+
+
+//const int areaEntrei[12] = {0,     1,     2,     3,    4,    1,     0,     4,     3,     2,     1,     4}; //Area em que o carro entrou
+//const int angulo[12] =     {NORTE, OESTE, OESTE, SUL, LESTE, NORTE, LESTE, OESTE, OESTE, NORTE, LESTE, SUL}; //Sentido em que ele esta
+//const int ladoGiro[12] =   {-1,    0,     -1,    -1,  -1,     1,    1,     0,     1,     1,      1,     1}; //Sentido em que ele precisa girar
+
 /**
  * @brief Mantém o carro dentro da pista, utilizando um controlador PD
  * 
@@ -282,6 +306,7 @@ void user_code(void)
 {
     Area cruzamento[5];
 
+    //Posições dos cruzamentos
     cruzamento[0].xMin = -22;
     cruzamento[0].xMax = -7;
     cruzamento[0].zMin = -5;
@@ -306,11 +331,15 @@ void user_code(void)
     cruzamento[4].xMax = 169;
     cruzamento[4].zMin = 200;
     cruzamento[4].zMax = 216;
-    
+
+    unsigned int time = get_time();
+    do
+    {
+        set_motor(1,0);
+    } while (get_time()-time < 1000);
+
     timeCtrInicio = get_time();
     timeCtrAtual = timeCtrInicio;
-
-    delayMotor(200,1,0);
 
 
     while(1 == 1)
@@ -320,10 +349,9 @@ void user_code(void)
         get_position(&x, &y, &z);
 
 
-
+        //Verifica se está dentro do cruzamento, e efetua o movimento necessário em cada caso
         if(dentroArea(cruzamento[0],x,z) == 1)
         {
-            set_handbreak(1);
 
             int dir = getDirecao();
 
@@ -342,7 +370,7 @@ void user_code(void)
                 dirFinal = SUL;
             }
 
-            while(dentroArea(cruzamento[0],x,z) && getDirecao() != dirFinal)
+            while(dentroArea(cruzamento[0],x,z) && getDirecaoEstrito() != dirFinal)
             {
                 get_position(&x, &y, &z);
                 set_motor(1, steering);
@@ -357,29 +385,38 @@ void user_code(void)
 
         if(dentroArea(cruzamento[1],x,z) == 1)
         {
-            set_handbreak(1);
 
             int dir = getDirecao();
 
             char steering;
+            int dirFinal;
 
             if(dir == OESTE)
             {
                 steering = 0;
+                dirFinal = OESTE;
             }
             else if (dir == NORTE)
             {
                 steering = 127;
+                dirFinal = LESTE;
             }
             else if (dir == LESTE)
             {
                 steering = 127;
+                dirFinal = SUL;
+            }
+
+            while(dentroArea(cruzamento[1],x,z) && getDirecaoEstrito() != dirFinal)
+            {
+                get_position(&x, &y, &z);
+                set_motor(1, steering);
             }
 
             while(dentroArea(cruzamento[1],x,z))
             {
                 get_position(&x, &y, &z);
-                set_motor(1, steering);
+                set_motor(1, 0);
             }
         }
 
@@ -387,121 +424,105 @@ void user_code(void)
 
         if(dentroArea(cruzamento[2],x,z) == 1)
         {
-            set_handbreak(1);
 
             int dir = getDirecao();
 
             char steering;
+            int dirFinal;
 
             if(dir == OESTE)
             {
                 steering = -127;
+                dirFinal = SUL;
             }
             else if (dir == NORTE)
             {
                 steering = 127;
+                dirFinal = LESTE;
+            }
+
+            while(dentroArea(cruzamento[2],x,z) && getDirecaoEstrito() != dirFinal)
+            {
+                get_position(&x, &y, &z);
+                set_motor(1, steering);
             }
 
             while(dentroArea(cruzamento[2],x,z))
             {
                 get_position(&x, &y, &z);
-                set_motor(1, steering);
+                set_motor(1, 0);
             }
         }
         
 
         if(dentroArea(cruzamento[3],x,z) == 1)
         {
-            set_handbreak(1);
 
             int dir = getDirecao();
 
             char steering;
+            int dirFinal;
 
             if(dir == SUL)
             {
                 steering = -127;
+                dirFinal = LESTE;
             }
             else if (dir == OESTE)
             {
                 steering = 127;
+                dirFinal = NORTE;
+            }
+
+            while(dentroArea(cruzamento[3],x,z) && getDirecaoEstrito() != dirFinal)
+            {
+                get_position(&x, &y, &z);
+                set_motor(1, steering);
             }
 
             while(dentroArea(cruzamento[3],x,z))
             {
                 get_position(&x, &y, &z);
-                set_motor(1, steering);
+                set_motor(1, 0);
             }
         }
 
-//const int areaEntrei[12] = {0,     1,     2,     3,    4,    1,     0,     4,     3,     2,     1,     4}; //Area em que o carro entrou
-//const int angulo[12] =     {NORTE, OESTE, OESTE, SUL, LESTE, NORTE, LESTE, OESTE, OESTE, NORTE, LESTE, SUL}; //Sentido em que ele esta
-//const int ladoGiro[12] =   {-1,    0,     -1,    -1,  -1,     1,    1,     0,     1,     1,      1,     1}; //Sentido em que ele precisa girar
-
         if(dentroArea(cruzamento[4],x,z) == 1)
         {
-            set_handbreak(1);
 
             int dir = getDirecao();
 
             char steering;
+            int dirFinal;
 
             if(dir == LESTE)
             {
                 steering = -127;
+                dirFinal = NORTE;
             }
             else if (dir == OESTE)
             {
                 steering = 0;
+                dirFinal = OESTE;
             }
             else if (dir == SUL)
             {
-                steering = 127;
+                steering = -127;
+                dirFinal = LESTE;
+            }
+
+            while(dentroArea(cruzamento[4],x,z) && getDirecaoEstrito() != dirFinal)
+            {
+                get_position(&x, &y, &z);
+                set_motor(1, steering);
             }
 
             while(dentroArea(cruzamento[4],x,z))
             {
                 get_position(&x, &y, &z);
-                set_motor(1, steering);
+                set_motor(1, 0);
             }
         }
-
-
-        /*for(int k = 0; k<5; k++)
-        {
-            if(dentroArea(cruzamento[k],x,z) == 1)
-            {
-                set_handbreak(1);
-
-                while(1 == 1)
-                {
-
-                }
-
-                int dir = getDirecao();
-
-                for(int j = 0; j<12; j++)
-                {
-                    if(areaEntrei[j] == k && angulo[j] == k)
-                    {
-                        char steering = 127 * ladoGiro[j];
-                        while(dentroArea(cruzamento[k],x,z))
-                        {
-                            get_position(&x, &y, &z);
-                            set_motor(1, steering);
-                        }
-                    }
-                }
-
-                
-            }
-
-        }*/
-
-        
     }
-
-    set_handbreak(1);
-
     
 }
